@@ -1,0 +1,26 @@
+{
+  "name": "wme-scripts",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "bundlemonkey",
+    "watch": "bundlemonkey --watch",
+    "watch:remote": "bundlemonkey --watch --remote",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write src/**/*.ts"
+  },
+  "dependencies": {
+    "bundlemonkey": "^0.7.6",
+    "wme-sdk-typings": "https://web-assets.waze.com/wme_sdk_docs/production/latest/wme-sdk-typings.tgz"
+  },
+  "devDependencies": {
+    "@types/tampermonkey": "5.0.5",
+    "typescript": "5.9.3",
+    "@types/bun": "1.3.10",
+    "eslint": "^9.0.0",
+    "typescript-eslint": "^8.0.0",
+    "@eslint/js": "^9.0.0",
+    "prettier": "^3.0.0"
+  },
+  "module": "index.ts"
+}
