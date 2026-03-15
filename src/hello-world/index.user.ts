@@ -4,7 +4,7 @@ export default defineUserScript({
   name: "Hello world",
   version: "0.1.0",
   description: "Hello from Bundlemonkey!",
-  match: ["https://www.waze.com/*/editor/*"],
+  match: ["https://www.waze.com/*/editor*", "https://www.waze.com/editor*"],
   grant: ["unsafeWindow"],
   main: () => {
     unsafeWindow.SDK_INITIALIZED.then(initScript);
