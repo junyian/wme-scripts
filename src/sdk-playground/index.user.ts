@@ -97,9 +97,7 @@ const SDK_REGISTRY: ModuleEntry[] = [
     label: "Shortcuts",
     accessor: "Shortcuts",
     docsClass: "Shortcuts",
-    methods: [
-      { name: "getAllShortcuts", docsClass: "Shortcuts" },
-    ],
+    methods: [{ name: "getAllShortcuts", docsClass: "Shortcuts" }],
   },
 ];
 
@@ -141,10 +139,7 @@ function serializeResult(value: unknown): string {
 }
 
 function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
 async function initScript() {
@@ -233,26 +228,30 @@ async function initScript() {
     container.querySelectorAll(".sdk-method-row").forEach((row) => {
       row.addEventListener("click", (e) => {
         if ((e.target as HTMLElement).closest("a")) return;
-        container
-          .querySelectorAll(".sdk-method-row")
-          .forEach((r) => {
-            (r as HTMLElement).style.removeProperty("border-left");
-            (r as HTMLElement).style.removeProperty("background");
-          });
+        container.querySelectorAll(".sdk-method-row").forEach((r) => {
+          (r as HTMLElement).style.removeProperty("border-left");
+          (r as HTMLElement).style.removeProperty("background");
+        });
         (row as HTMLElement).style.borderLeft = "3px solid #1a73e8";
         (row as HTMLElement).style.background = "#e3edff";
 
         const accessor = row.getAttribute("data-module-accessor")!;
         const label = row.getAttribute("data-module-label")!;
         const methodName = row.getAttribute("data-method")!;
-        selectedModule = SDK_REGISTRY.find((m) => m.accessor === accessor && m.label === label)!;
-        selectedMethod = selectedModule.methods.find((m) => m.name === methodName)!;
+        selectedModule = SDK_REGISTRY.find(
+          (m) => m.accessor === accessor && m.label === label,
+        )!;
+        selectedMethod = selectedModule.methods.find(
+          (m) => m.name === methodName,
+        )!;
 
         const labelEl = container.querySelector(".sdk-selected-label")!;
         labelEl.textContent = `${selectedModule.label}.${selectedMethod.name}()`;
         (labelEl as HTMLElement).style.color = "#333";
 
-        const btn = container.querySelector(".sdk-execute-btn") as HTMLButtonElement;
+        const btn = container.querySelector(
+          ".sdk-execute-btn",
+        ) as HTMLButtonElement;
         btn.disabled = false;
         btn.style.opacity = "1";
       });
@@ -287,7 +286,8 @@ async function initScript() {
         ? (sdk as unknown as Record<string, unknown>)[mod.accessor]
         : sdk;
       const fn = (target as unknown as Record<string, unknown>)[method.name];
-      if (typeof fn !== "function") throw new Error(`${method.name} is not a function`);
+      if (typeof fn !== "function")
+        throw new Error(`${method.name} is not a function`);
       const result = (fn as () => unknown).call(target);
       const serialized = serializeResult(result);
       resultHtml = `<pre style="margin:0;font-size:11px;color:#a9dc76;background:#16161e;padding:4px 6px;border-radius:3px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;">${escapeHtml(serialized)}</pre>`;
