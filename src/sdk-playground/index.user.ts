@@ -166,7 +166,7 @@ async function initScript() {
     container.innerHTML = buildSidebarHtml();
     wireUpInteractions(container);
   } catch (error) {
-    console.error("[wme-sdk-playground] Error registering sidebar.");
+    console.error("[wme-sdk-playground] Error registering sidebar:", error);
   }
 
   function buildSidebarHtml(): string {
