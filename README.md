@@ -31,12 +31,14 @@ Built scripts land in `.dev/` as `<script-name>.user.js`. Install them in Tamper
 ## Adding a new script
 
 1. Create a directory under `src/`:
+
    ```
    src/my-script/
    └── index.user.ts
    ```
 
 2. Use `defineUserScript` from Bundlemonkey to declare the metadata and entry point:
+
    ```ts
    import { defineUserScript } from "bundlemonkey";
 
