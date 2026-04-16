@@ -1,5 +1,11 @@
 import { defineUserScript } from "bundlemonkey";
 import { RegisterSidebarTabResult, WmeSDK } from "wme-sdk-typings";
+import {
+  SDK_REGISTRY,
+  getDocsUrl,
+  type ModuleEntry,
+  type MethodEntry,
+} from "./registry.js";
 
 export default defineUserScript({
   name: "WME SDK Playground",
@@ -11,99 +17,6 @@ export default defineUserScript({
     unsafeWindow.SDK_INITIALIZED.then(initScript);
   },
 });
-
-const SDK_DOCS_BASE =
-  "https://web-assets.waze.com/wme_sdk_docs/production/latest/classes/index.SDK.";
-
-interface MethodEntry {
-  name: string;
-  docsClass: string;
-}
-
-interface ModuleEntry {
-  label: string;
-  accessor: string;
-  docsClass: string;
-  methods: MethodEntry[];
-}
-
-const SDK_REGISTRY: ModuleEntry[] = [
-  {
-    label: "WmeSDK",
-    accessor: "",
-    docsClass: "WmeSDK",
-    methods: [
-      { name: "isBetaEnvironment", docsClass: "WmeSDK" },
-      { name: "getScriptName", docsClass: "WmeSDK" },
-      { name: "getScriptId", docsClass: "WmeSDK" },
-      { name: "getSDKVersion", docsClass: "WmeSDK" },
-      { name: "getWMEVersion", docsClass: "WmeSDK" },
-    ],
-  },
-  {
-    label: "State",
-    accessor: "State",
-    docsClass: "WmeState",
-    methods: [
-      { name: "isMapLoading", docsClass: "WmeState" },
-      { name: "isInitialMapDataLoaded", docsClass: "WmeState" },
-      { name: "isInitialized", docsClass: "WmeState" },
-      { name: "isReady", docsClass: "WmeState" },
-      { name: "isLoggedIn", docsClass: "WmeState" },
-      { name: "getUserInfo", docsClass: "WmeState" },
-    ],
-  },
-  {
-    label: "Map",
-    accessor: "Map",
-    docsClass: "Map",
-    methods: [
-      { name: "getZoomLevel", docsClass: "Map" },
-      { name: "getMapCenter", docsClass: "Map" },
-      { name: "getMapExtent", docsClass: "Map" },
-      { name: "getMapResolution", docsClass: "Map" },
-      { name: "getPermalink", docsClass: "Map" },
-      { name: "getLiveMapLink", docsClass: "Map" },
-      { name: "isStreetViewActive", docsClass: "Map" },
-      { name: "getMapViewportElement", docsClass: "Map" },
-    ],
-  },
-  {
-    label: "Editing",
-    accessor: "Editing",
-    docsClass: "Editing",
-    methods: [
-      { name: "getSelection", docsClass: "Editing" },
-      { name: "getUnsavedChangesCount", docsClass: "Editing" },
-      { name: "getRedoChangesCount", docsClass: "Editing" },
-      { name: "isEditingAllowed", docsClass: "Editing" },
-      { name: "isDrawingInProgress", docsClass: "Editing" },
-      { name: "getCurrentSaveMode", docsClass: "Editing" },
-      { name: "isPracticeModeOn", docsClass: "Editing" },
-      { name: "isSnapshotModeOn", docsClass: "Editing" },
-    ],
-  },
-  {
-    label: "Settings",
-    accessor: "Settings",
-    docsClass: "Settings",
-    methods: [
-      { name: "getLocale", docsClass: "Settings" },
-      { name: "getRegionCode", docsClass: "Settings" },
-      { name: "getUserSettings", docsClass: "Settings" },
-    ],
-  },
-  {
-    label: "Shortcuts",
-    accessor: "Shortcuts",
-    docsClass: "Shortcuts",
-    methods: [{ name: "getAllShortcuts", docsClass: "Shortcuts" }],
-  },
-];
-
-function getDocsUrl(docsClass: string, methodName: string): string {
-  return `${SDK_DOCS_BASE}${docsClass}.html#${methodName.toLowerCase()}`;
-}
 
 function serializeResult(value: unknown): string {
   if (value === null) return "null";
@@ -160,13 +73,14 @@ async function initScript() {
     const container = sidebarTabResult.tabPane;
     container.innerHTML = buildSidebarHtml();
     wireUpInteractions(container);
+    pinBottomPanel(container);
   } catch (error) {
     console.error("[wme-sdk-playground] Error registering sidebar:", error);
   }
 
   function buildSidebarHtml(): string {
     const moduleSections = SDK_REGISTRY.map(
-      (mod) => `
+      (mod: ModuleEntry) => `
       <div class="filter-section toggle-group collapsible-container update-request-section collapsed" data-module="${mod.accessor}">
         <div class="filter-section-header">
           <wz-button class="collapse-arrow" color="clear-icon" size="xs" type="button" name value>
@@ -178,10 +92,10 @@ async function initScript() {
         <ul class="issue-tracker-filter-list update-request-filter-list" style="list-style:none;padding:0;margin:0;">
           ${mod.methods
             .map(
-              (method) => `
-            <li class="sdk-method-row" data-module-accessor="${mod.accessor}" data-module-label="${mod.label}" data-method="${method.name}" style="padding:5px 12px 5px 24px;font-family:monospace;font-size:12px;color:#555;display:flex;align-items:center;cursor:pointer;">
+              (method: MethodEntry) => `
+            <li class="sdk-method-row" data-module-accessor="${mod.accessor}" data-method="${method.name}" style="padding:2px 12px 2px 24px;font-family:monospace;font-size:12px;color:#555;display:flex;align-items:center;cursor:pointer;">
               <span class="sdk-method-name">${method.name}()</span>
-              <a href="${getDocsUrl(method.docsClass, method.name)}" target="_blank" rel="noopener" style="margin-left:auto;font-size:10px;color:#1a73e8;text-decoration:none;" title="Open docs">📖</a>
+              <a href="${getDocsUrl(mod.docsClass, method.name)}" target="_blank" rel="noopener" style="margin-left:auto;color:#1a73e8;text-decoration:none;" title="Open docs"><i class="w-icon w-icon-doc" style="font-size:12px;"></i></a>
             </li>`,
             )
             .join("")}
@@ -190,7 +104,13 @@ async function initScript() {
     ).join("");
 
     return `
-      <div class="tab-pane sidebar-tab-pane">
+      <style>
+        .sdk-playground .filter-section { margin: 0 !important; }
+        .sdk-playground .filter-section-header { min-height: 0 !important; padding: 3px 8px !important; margin: 0 !important; }
+        .sdk-playground .sdk-method-row { margin-top: 0 !important; }
+        .sdk-playground .sidebar-tab-pane-body { overflow-y: auto; }
+      </style>
+      <div class="tab-pane sidebar-tab-pane sdk-playground">
         <div class="sidebar-tab-pane-header">
           <wz-section-header headline="WME SDK Playground" size="section-header2" class="settings-header">
             <i slot="icon" class="w-icon w-icon-script"></i>
@@ -201,7 +121,7 @@ async function initScript() {
         </div>
         <div class="sdk-execute-bar" style="padding:8px 12px;background:#fff;border-top:2px solid #1a73e8;display:flex;align-items:center;gap:8px;">
           <span class="sdk-selected-label" style="font-family:monospace;font-size:11px;color:#999;flex:1;">Select a method</span>
-          <button class="sdk-execute-btn" style="background:#1a73e8;color:#fff;border:none;border-radius:4px;padding:5px 14px;font-size:12px;cursor:pointer;font-weight:500;opacity:0.5;" disabled>▶ Execute</button>
+          <button class="sdk-execute-btn" style="background:#1a73e8;color:#fff;border:none;border-radius:4px;padding:5px 14px;font-size:12px;cursor:pointer;font-weight:500;opacity:0.5;" disabled>Execute</button>
         </div>
         <div class="sdk-response-panel" style="background:#1e1e2e;border-top:1px solid #333;">
           <div style="padding:6px 12px;display:flex;align-items:center;border-bottom:1px solid #333;">
@@ -212,6 +132,55 @@ async function initScript() {
         </div>
       </div>
     `;
+  }
+
+  function pinBottomPanel(container: HTMLElement): void {
+    function init() {
+      let scrollEl: HTMLElement | null = null;
+      let p = container.parentElement;
+      while (p && p !== document.documentElement) {
+        const ov = window.getComputedStyle(p).overflowY;
+        if (ov === "auto" || ov === "scroll") {
+          scrollEl = p;
+          break;
+        }
+        p = p.parentElement;
+      }
+      if (!scrollEl) return;
+
+      // Structural styles applied once
+      container.style.overflow = "hidden";
+      container.style.display = "flex";
+      container.style.flexDirection = "column";
+
+      const wrapper = container.querySelector<HTMLElement>(".sdk-playground");
+      if (wrapper) {
+        wrapper.style.flex = "1";
+        wrapper.style.minHeight = "0";
+        wrapper.style.overflow = "hidden";
+        wrapper.style.display = "flex";
+        wrapper.style.flexDirection = "column";
+      }
+
+      const body = container.querySelector<HTMLElement>(
+        ".sidebar-tab-pane-body",
+      );
+      if (body) {
+        body.style.flex = "1";
+        body.style.minHeight = "0";
+        body.style.overflowY = "auto";
+        body.style.height = "";
+      }
+
+      // Only height needs updating when the scroll container resizes
+      const setHeight = () => {
+        container.style.height = `${scrollEl!.clientHeight}px`;
+      };
+      setHeight();
+      new ResizeObserver(setHeight).observe(scrollEl);
+    }
+
+    requestAnimationFrame(() => requestAnimationFrame(init));
   }
 
   function wireUpInteractions(container: HTMLElement): void {
@@ -236,13 +205,12 @@ async function initScript() {
         (row as HTMLElement).style.background = "#e3edff";
 
         const accessor = row.getAttribute("data-module-accessor")!;
-        const label = row.getAttribute("data-module-label")!;
         const methodName = row.getAttribute("data-method")!;
         selectedModule = SDK_REGISTRY.find(
-          (m) => m.accessor === accessor && m.label === label,
+          (m: ModuleEntry) => m.accessor === accessor,
         )!;
         selectedMethod = selectedModule.methods.find(
-          (m) => m.name === methodName,
+          (m: MethodEntry) => m.name === methodName,
         )!;
 
         const labelEl = container.querySelector(".sdk-selected-label")!;
@@ -283,7 +251,12 @@ async function initScript() {
 
     try {
       const target = mod.accessor
-        ? (sdk as unknown as Record<string, unknown>)[mod.accessor]
+        ? mod.accessor
+            .split(".")
+            .reduce(
+              (obj, key) => (obj as Record<string, unknown>)[key],
+              sdk as unknown,
+            )
         : sdk;
       const fn = (target as unknown as Record<string, unknown>)[method.name];
       if (typeof fn !== "function")
