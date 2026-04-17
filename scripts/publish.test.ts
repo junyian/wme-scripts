@@ -29,7 +29,13 @@ describe("lookupScriptId", () => {
 
   test("throws with descriptive error when name is missing", () => {
     expect(() => lookupScriptId({ "hello-world": 12345 }, "unknown-script")).toThrow(
-      'Script "unknown-script" not found in greasyfork.config.json'
+      'Script "unknown-script" has no Greasyfork ID configured in greasyfork.config.json. Register it on Greasyfork first.'
+    );
+  });
+
+  test("throws when ID is 0 (unconfigured placeholder)", () => {
+    expect(() => lookupScriptId({ "hello-world": 0 }, "hello-world")).toThrow(
+      'Script "hello-world" has no Greasyfork ID configured in greasyfork.config.json. Register it on Greasyfork first.'
     );
   });
 });

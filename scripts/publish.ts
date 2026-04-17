@@ -18,8 +18,10 @@ export function parseTag(tag: string): ParsedTag {
 
 export function lookupScriptId(config: Record<string, number>, name: string): number {
   const id = config[name];
-  if (id === undefined) {
-    throw new Error(`Script "${name}" not found in greasyfork.config.json`);
+  if (!id) {
+    throw new Error(
+      `Script "${name}" has no Greasyfork ID configured in greasyfork.config.json. Register it on Greasyfork first.`
+    );
   }
   return id;
 }
@@ -90,7 +92,7 @@ async function main(): Promise<void> {
   const build = Bun.spawnSync(["bun", "run", "build"], { stdout: "inherit", stderr: "inherit" });
   if (build.exitCode !== 0) process.exit(build.exitCode ?? 1);
 
-  const scriptPath = resolve(import.meta.dir, `../.dev/${name}.user.js`);
+  const scriptPath = resolve(import.meta.dir, `../dist/${name}.user.js`);
   const code = readFileSync(scriptPath, "utf-8");
 
   await uploadToGreasyfork(scriptId, code, apiKey);
