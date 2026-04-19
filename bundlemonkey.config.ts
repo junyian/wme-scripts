@@ -3,9 +3,9 @@ import type { Config } from "bundlemonkey";
 const config: Config = {
   defaultMeta: {
     updateURL: ({ scriptName }) =>
-      `https://junyian.github.io/wme-scripts/${scriptName}.user.js`,
+      `https://www.github.com/wme-scripts/raw/main/dist/${scriptName}.user.js`,
     downloadURL: ({ scriptName }) =>
-      `https://junyian.github.io/wme-scripts/${scriptName}.user.js`,
+      `https://www.github.com/wme-scripts/raw/main/dist/${scriptName}.user.js`,
   },
 };
 
